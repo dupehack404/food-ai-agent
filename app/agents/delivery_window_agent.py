@@ -18,7 +18,7 @@ class DeliveryWindowAgent:
             return DeliveryDecision(
                 action="do_not_order",
                 chosen_slot=None,
-                reason=f"No delivery windows configured for {current_day_name}.",
+                reason=f"На {self._translate_day(current_day_name)} не настроены окна доставки.",
             )
 
         for window in windows:
@@ -26,7 +26,7 @@ class DeliveryWindowAgent:
                 return DeliveryDecision(
                     action="order_now",
                     chosen_slot=f"{window.start}-{window.end}",
-                    reason="Current time is inside allowed delivery window.",
+                    reason="Сейчас можно безопасно оформить заказ.",
                 )
 
         next_window = self._find_next_window_after_time(current_time, windows)
@@ -34,13 +34,13 @@ class DeliveryWindowAgent:
             return DeliveryDecision(
                 action="schedule_for_later",
                 chosen_slot=f"{next_window.start}-{next_window.end}",
-                reason="Current time is outside allowed window, next safe slot найден.",
+                reason=f"Сейчас не лучшее время для доставки. Ближайшее безопасное окно: {next_window.start}-{next_window.end}.",
             )
 
         return DeliveryDecision(
             action="do_not_order",
             chosen_slot=None,
-            reason="No more safe delivery windows left for today.",
+            reason="На сегодня безопасных окон доставки больше нет.",
         )
 
     def _is_time_in_window(self, current_time: str, window: TimeWindow) -> bool:
@@ -62,3 +62,15 @@ class DeliveryWindowAgent:
     def _to_minutes(self, time_str: str) -> int:
         parsed = datetime.strptime(time_str, "%H:%M")
         return parsed.hour * 60 + parsed.minute
+
+    def _translate_day(self, day_name: str) -> str:
+        mapping = {
+            "monday": "понедельник",
+            "tuesday": "вторник",
+            "wednesday": "среду",
+            "thursday": "четверг",
+            "friday": "пятницу",
+            "saturday": "субботу",
+            "sunday": "воскресенье",
+        }
+        return mapping.get(day_name, day_name)

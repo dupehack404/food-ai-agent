@@ -41,4 +41,8 @@ class UserProfile(BaseModel):
     weekly_availability: WeeklyAvailability = Field(default_factory=WeeklyAvailability)
     delivery_policy: DeliveryPolicy = Field(default_factory=DeliveryPolicy)
 
+    # soft = dislikes только штрафуют score
+    # hard = dislikes полностью исключаются из плана
+    dislike_mode: str = "soft"
+
     notes: Optional[str] = None

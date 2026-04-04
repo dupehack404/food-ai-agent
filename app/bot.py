@@ -20,12 +20,18 @@ dp = Dispatcher()
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
     await message.answer(
-        "Бот запущен.\n\n"
+        "Привет. Я Food AI Agent.\n\n"
+        "Я умею:\n"
+        "• сохранять твои предпочтения\n"
+        "• строить план питания на день и неделю\n"
+        "• учитывать бюджет\n"
+        "• учитывать время доставки\n\n"
         "Команды:\n"
-        "/prefs <текст предпочтений>\n"
+        "/prefs <текст>\n"
         "/profile\n"
         "/plan\n"
         "/week\n"
+        "/strict <soft|hard>\n"
         "/help"
     )
 
@@ -33,11 +39,13 @@ async def cmd_start(message: Message):
 @dp.message(Command("help"))
 async def cmd_help(message: Message):
     await message.answer(
-        "Доступные команды:\n"
+        "Доступные команды:\n\n"
         "/prefs <текст> — обновить предпочтения\n"
         "/profile — показать профиль\n"
-        "/plan — запустить дневной цикл\n"
+        "/plan — построить дневной план\n"
         "/week — построить недельный план\n"
+        "/strict soft — dislikes только штрафуют\n"
+        "/strict hard — dislikes полностью исключаются\n"
         "/help — показать помощь"
     )
 
@@ -51,9 +59,9 @@ async def cmd_prefs(message: Message):
 
     if len(parts) < 2:
         await message.answer(
-            "После /prefs передай текст.\n"
+            "После /prefs передай текст с предпочтениями.\n\n"
             "Пример:\n"
-            "/prefs У меня аллергия на milk, eggs. Не люблю fish. Люблю chicken, rice. Мне нужно 2200 ккал. Бюджет 1200."
+            "/prefs У меня аллергия на milk, eggs. Не люблю fish и broccoli. Люблю chicken, rice. Мне нужно 2200 ккал. Бюджет 1200 руб."
         )
         return
 
@@ -65,7 +73,7 @@ async def cmd_prefs(message: Message):
     )
     container.ensure_default_schedule(user_id)
 
-    await message.answer("Предпочтения обновлены.")
+    await message.answer("✅ Предпочтения обновлены.")
     await message.answer(TelegramFormatter.format_profile(profile))
 
 
@@ -79,6 +87,40 @@ async def cmd_profile(message: Message):
         return
 
     await message.answer(TelegramFormatter.format_profile(profile))
+
+
+@dp.message(Command("strict"))
+async def cmd_strict(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=1)
+
+    if len(parts) < 2:
+        current_mode = "жёсткий" if profile.dislike_mode == "hard" else "мягкий"
+        await message.answer(
+            f"Текущий режим dislikes: {current_mode}\n\n"
+            "Используй:\n"
+            "/strict soft — dislikes только штрафуют\n"
+            "/strict hard — dislikes полностью исключаются"
+        )
+        return
+
+    mode = parts[1].strip().lower()
+    updated_profile = container.orchestrator.update_dislike_mode(user_id, mode)
+
+    if not updated_profile:
+        await message.answer("Некорректный режим. Используй /strict soft или /strict hard")
+        return
+
+    mode_label = "жёсткий" if mode == "hard" else "мягкий"
+    await message.answer(f"✅ Режим dislikes обновлён: {mode_label}")
+    await message.answer(TelegramFormatter.format_profile(updated_profile))
 
 
 @dp.message(Command("plan"))

@@ -70,14 +70,25 @@
           "end": "21:00"
         }
       ],
-      "saturday": [],
-      "sunday": []
+      "saturday": [
+        {
+          "start": "10:00",
+          "end": "21:00"
+        }
+      ],
+      "sunday": [
+        {
+          "start": "10:00",
+          "end": "21:00"
+        }
+      ]
     },
     "delivery_policy": {
       "allow_leave_at_door": false,
       "forbid_when_user_away": true,
       "min_buffer_minutes": 30
     },
+    "dislike_mode": "soft",
     "notes": null
   }
 }

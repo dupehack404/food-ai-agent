@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from locale import str
 
 
 class FoodOrchestrator:
@@ -33,6 +34,18 @@ class FoodOrchestrator:
 
         self.user_repository.save_user_profile(updated_profile)
         return updated_profile
+    
+    def update_dislike_mode(self, user_id: str, mode: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        if mode not in {"soft", "hard"}:
+            return None
+
+        profile.dislike_mode = mode
+        self.user_repository.save_user_profile(profile)
+        return profile
 
     def run_daily_cycle(
         self,
