@@ -1,28 +1,56 @@
 # Food AI Agent
 
-Multi-agent pet project for automated food planning and ordering.
+Pet project на Python, реализующий multi-agent систему для автоматизации планирования питания и оформления заказа еды.
 
-## Features
-- user preference extraction
-- meal planning
-- delivery window decision
-- order planning
-- Telegram bot interface
-- JSON persistence
+## Общее описание
 
-## Agents
-- PreferenceAgent
-- MealAgent
-- DeliveryWindowAgent
-- OrderAgent
+Food AI Agent — это система из нескольких специализированных агентов, которая помогает пользователю автоматизировать ежедневные решения, связанные с едой.
 
-## Stack
-- Python
-- aiogram
-- OpenAI API
-- Playwright
-- JSON storage
+Система умеет:
 
-## Run
-```bash
-python -m app.bot
+- хранить предпочтения и ограничения пользователя
+- формировать план питания
+- определять безопасное окно доставки
+- формировать заказ
+- работать через Telegram-бота
+- сохранять состояние между запусками
+
+Проект специально построен как **multi-agent архитектура**, а не как один “всемогущий” помощник.
+
+---
+
+## Цель проекта
+
+Основная цель проекта — изучить, как несколько специализированных AI-агентов могут работать внутри одного прикладного пайплайна.
+
+Вместо одного большого агента система разделяет ответственность между несколькими компонентами:
+
+- один агент отвечает за предпочтения пользователя
+- один агент отвечает за планирование питания
+- один агент отвечает за решение по времени доставки
+- один агент отвечает за формирование заказа
+
+Такую архитектуру проще:
+- объяснять
+- тестировать
+- масштабировать
+- отлаживать
+
+---
+
+## Архитектура
+
+```mermaid
+flowchart TD
+    U[Пользователь / Telegram Bot] --> O[FoodOrchestrator]
+
+    O --> P[PreferenceAgent]
+    O --> M[MealAgent]
+    O --> D[DeliveryWindowAgent]
+    O --> A[OrderAgent]
+
+    O --> UR[UserRepository]
+    O --> MR[MealHistoryRepository]
+    O --> CR[CatalogRepository]
+
+    A --> E[PlaywrightExecutor]
