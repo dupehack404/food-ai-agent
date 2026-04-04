@@ -1,0 +1,8 @@
+openai
+pydantic
+python-dotenv
+aiogram
+playwright
+sqlalchemy
+alembic
+aiohttp
