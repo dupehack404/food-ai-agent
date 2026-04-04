@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+
+
 class FoodOrchestrator:
     def __init__(
         self,
@@ -86,3 +89,38 @@ class FoodOrchestrator:
             result["execution_result"] = execution_result
 
         return result
+
+    def run_weekly_planning(self, user_id: str, start_date: str, days: int = 7):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return {
+                "status": "error",
+                "message": "User profile not found.",
+            }
+
+        catalog = self.catalog_repository.get_catalog()
+        base_history = self.meal_history_repository.get_recent_meal_plans(user_id)
+
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        simulated_history = list(base_history)
+        weekly_plans = []
+
+        for offset in range(days):
+            day_dt = start_dt + timedelta(days=offset)
+            target_day = day_dt.strftime("%Y-%m-%d")
+
+            meal_plan = self.meal_agent.plan(
+                profile=profile,
+                catalog=catalog,
+                history=simulated_history,
+                target_day=target_day,
+            )
+
+            weekly_plans.append(meal_plan)
+            simulated_history.append(meal_plan)
+
+        return {
+            "status": "ok",
+            "profile": profile,
+            "plans": weekly_plans,
+        }

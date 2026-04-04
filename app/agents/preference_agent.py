@@ -43,6 +43,7 @@ class PreferenceAgent:
         ])
 
         calories = self._extract_calories(text)
+        budget = self._extract_budget(text)
 
         if allergies:
             profile.allergies = self._merge_unique(profile.allergies, allergies)
@@ -54,6 +55,8 @@ class PreferenceAgent:
             profile.forbidden_products = self._merge_unique(profile.forbidden_products, forbidden)
         if calories is not None:
             profile.calorie_target = calories
+        if budget is not None:
+            profile.budget_per_day = budget
 
         return profile
 
@@ -68,6 +71,18 @@ class PreferenceAgent:
             match = re.search(pattern, text)
             if match:
                 return int(match.group(1))
+        return None
+
+    def _extract_budget(self, text: str) -> Optional[float]:
+        patterns = [
+            r"бюджет\s*(\d+(?:[.,]\d+)?)",
+            r"до\s*(\d+(?:[.,]\d+)?)\s*(?:руб|₽|ruble|rub)",
+            r"budget\s*(\d+(?:[.,]\d+)?)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                return float(match.group(1).replace(",", "."))
         return None
 
     def _extract_likes(self, text: str) -> list[str]:

@@ -25,6 +25,7 @@ async def cmd_start(message: Message):
         "/prefs <текст предпочтений>\n"
         "/profile\n"
         "/plan\n"
+        "/week\n"
         "/help"
     )
 
@@ -32,10 +33,12 @@ async def cmd_start(message: Message):
 @dp.message(Command("help"))
 async def cmd_help(message: Message):
     await message.answer(
-        "Команды:\n"
+        "Доступные команды:\n"
         "/prefs <текст> — обновить предпочтения\n"
         "/profile — показать профиль\n"
-        "/plan — запустить дневной цикл"
+        "/plan — запустить дневной цикл\n"
+        "/week — построить недельный план\n"
+        "/help — показать помощь"
     )
 
 
@@ -50,7 +53,7 @@ async def cmd_prefs(message: Message):
         await message.answer(
             "После /prefs передай текст.\n"
             "Пример:\n"
-            "/prefs У меня аллергия на milk, eggs. Не люблю fish. Люблю chicken, rice. Мне нужно 2200 ккал."
+            "/prefs У меня аллергия на milk, eggs. Не люблю fish. Люблю chicken, rice. Мне нужно 2200 ккал. Бюджет 1200."
         )
         return
 
@@ -113,6 +116,31 @@ async def cmd_plan(message: Message):
 
     if result["execution_result"]:
         await message.answer(TelegramFormatter.format_execution_result(result["execution_result"]))
+
+
+@dp.message(Command("week"))
+async def cmd_week(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    now = datetime.now()
+    start_date = now.strftime("%Y-%m-%d")
+
+    result = container.orchestrator.run_weekly_planning(
+        user_id=user_id,
+        start_date=start_date,
+        days=7,
+    )
+
+    if result["status"] != "ok":
+        await message.answer(result["message"])
+        return
+
+    await message.answer(TelegramFormatter.format_weekly_plans(result["plans"]))
 
 
 async def main():
