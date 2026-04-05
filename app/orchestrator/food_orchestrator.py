@@ -46,6 +46,33 @@ class FoodOrchestrator:
         self.user_repository.save_user_profile(profile)
         return profile
 
+    def update_calorie_target(self, user_id: str, calories: int):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        profile.calorie_target = calories
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def update_daily_meal_count(self, user_id: str, meal_count: int):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        profile.daily_meal_count = meal_count
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def update_budget(self, user_id: str, budget: float | None):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        profile.budget_per_day = budget
+        self.user_repository.save_user_profile(profile)
+        return profile
+
     def add_forbidden_product(self, user_id: str, product: str):
         profile = self.user_repository.get_user_profile(user_id)
         if not profile:

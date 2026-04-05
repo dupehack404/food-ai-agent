@@ -14,9 +14,9 @@
       "rice"
     ],
     "forbidden_products": [],
-    "calorie_target": 2200,
-    "daily_meal_count": 3,
-    "budget_per_day": 1200.0,
+    "calorie_target": 2400,
+    "daily_meal_count": 4,
+    "budget_per_day": 1400.0,
     "preferred_cuisines": [],
     "preferred_delivery_slots": [],
     "weekly_availability": {

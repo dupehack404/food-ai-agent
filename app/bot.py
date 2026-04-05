@@ -64,6 +64,10 @@ async def cmd_start(message: Message):
         "Команды:\n"
         "/prefs <текст>\n"
         "/profile\n"
+        "/calories <число>\n"
+        "/meals <число>\n"
+        "/budget <число>\n"
+        "/budget clear\n"
         "/plan\n"
         "/week\n"
         "/strict <soft|hard>\n"
@@ -80,6 +84,10 @@ async def cmd_help(message: Message):
         "Доступные команды:\n\n"
         "/prefs <текст> — обновить предпочтения\n"
         "/profile — показать профиль\n"
+        "/calories 2200 — задать цель по калориям\n"
+        "/meals 3 — задать число приёмов пищи в день\n"
+        "/budget 1200 — задать дневной бюджет\n"
+        "/budget clear — убрать ограничение бюджета\n"
         "/plan — построить дневной план\n"
         "/week — построить недельный план\n"
         "/strict soft — dislikes только штрафуют\n"
@@ -91,8 +99,8 @@ async def cmd_help(message: Message):
         "/catalog — показать весь каталог\n"
         "/catalog safe — показать безопасные блюда под твой профиль\n"
         "/forbidden — показать стоп-лист\n"
-        "/forbidden add strawberry — добавить в стоп-лист\n"
-        "/forbidden remove strawberry — убрать из стоп-листа\n"
+        "/forbidden add strawberry — добавить продукт\n"
+        "/forbidden remove strawberry — удалить продукт\n"
         "/forbidden clear — очистить стоп-лист\n"
         "/help — показать помощь"
     )
@@ -138,6 +146,111 @@ async def cmd_profile(message: Message):
     await message.answer(TelegramFormatter.format_profile(profile))
     await message.answer(TelegramFormatter.format_schedule(profile))
     await message.answer(TelegramFormatter.format_forbidden(profile))
+
+
+@dp.message(Command("calories"))
+async def cmd_calories(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=1)
+
+    if len(parts) < 2:
+        await message.answer("Используй: /calories 2200")
+        return
+
+    try:
+        calories = int(parts[1].strip())
+    except ValueError:
+        await message.answer("Некорректное значение. Пример: /calories 2200")
+        return
+
+    if calories < 500 or calories > 6000:
+        await message.answer("Допустимый диапазон: от 500 до 6000 ккал.")
+        return
+
+    updated = container.orchestrator.update_calorie_target(user_id, calories)
+    await message.answer(f"✅ Цель по калориям обновлена: {calories}")
+    await message.answer(TelegramFormatter.format_profile(updated))
+
+
+@dp.message(Command("meals"))
+async def cmd_meals(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=1)
+
+    if len(parts) < 2:
+        await message.answer("Используй: /meals 3")
+        return
+
+    try:
+        meal_count = int(parts[1].strip())
+    except ValueError:
+        await message.answer("Некорректное значение. Пример: /meals 3")
+        return
+
+    if meal_count < 1 or meal_count > 6:
+        await message.answer("Допустимое число приёмов пищи: от 1 до 6.")
+        return
+
+    updated = container.orchestrator.update_daily_meal_count(user_id, meal_count)
+    await message.answer(f"✅ Число приёмов пищи обновлено: {meal_count}")
+    await message.answer(TelegramFormatter.format_profile(updated))
+
+
+@dp.message(Command("budget"))
+async def cmd_budget(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=1)
+
+    if len(parts) < 2:
+        await message.answer(
+            "Используй:\n"
+            "/budget 1200\n"
+            "/budget clear"
+        )
+        return
+
+    value = parts[1].strip().lower()
+
+    if value == "clear":
+        updated = container.orchestrator.update_budget(user_id, None)
+        await message.answer("✅ Ограничение по бюджету убрано.")
+        await message.answer(TelegramFormatter.format_profile(updated))
+        return
+
+    try:
+        budget = float(value.replace(",", "."))
+    except ValueError:
+        await message.answer("Некорректное значение. Пример: /budget 1200")
+        return
+
+    if budget < 100 or budget > 10000:
+        await message.answer("Допустимый дневной бюджет: от 100 до 10000.")
+        return
+
+    updated = container.orchestrator.update_budget(user_id, budget)
+    await message.answer(f"✅ Дневной бюджет обновлён: {budget}")
+    await message.answer(TelegramFormatter.format_profile(updated))
 
 
 @dp.message(Command("strict"))
