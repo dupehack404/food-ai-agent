@@ -5,12 +5,8 @@
       "milk",
       "eggs"
     ],
-    "dislikes": [
-      "fish",
-      "broccoli"
-    ],
+    "dislikes": [],
     "likes": [
-      "chicken",
       "rice"
     ],
     "forbidden_products": [],

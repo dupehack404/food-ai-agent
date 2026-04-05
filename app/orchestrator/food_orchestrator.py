@@ -108,6 +108,70 @@ class FoodOrchestrator:
         self.user_repository.save_user_profile(profile)
         return profile
 
+    def add_like(self, user_id: str, item: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        normalized = item.strip().lower()
+        if normalized and normalized not in [x.lower() for x in profile.likes]:
+            profile.likes.append(normalized)
+
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def remove_like(self, user_id: str, item: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        normalized = item.strip().lower()
+        profile.likes = [x for x in profile.likes if x.lower() != normalized]
+
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def clear_likes(self, user_id: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        profile.likes = []
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def add_dislike(self, user_id: str, item: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        normalized = item.strip().lower()
+        if normalized and normalized not in [x.lower() for x in profile.dislikes]:
+            profile.dislikes.append(normalized)
+
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def remove_dislike(self, user_id: str, item: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        normalized = item.strip().lower()
+        profile.dislikes = [x for x in profile.dislikes if x.lower() != normalized]
+
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def clear_dislikes(self, user_id: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        profile.dislikes = []
+        self.user_repository.save_user_profile(profile)
+        return profile
+
     def get_catalog(self):
         return self.catalog_repository.get_catalog()
 

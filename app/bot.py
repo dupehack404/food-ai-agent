@@ -60,7 +60,8 @@ async def cmd_start(message: Message):
         "• учитывать бюджет\n"
         "• учитывать время доставки\n"
         "• показывать каталог и безопасные блюда\n"
-        "• управлять стоп-листом\n\n"
+        "• управлять стоп-листом\n"
+        "• отдельно управлять likes и dislikes\n\n"
         "Команды:\n"
         "/prefs <текст>\n"
         "/profile\n"
@@ -68,6 +69,8 @@ async def cmd_start(message: Message):
         "/meals <число>\n"
         "/budget <число>\n"
         "/budget clear\n"
+        "/likes\n"
+        "/dislikes\n"
         "/plan\n"
         "/week\n"
         "/strict <soft|hard>\n"
@@ -88,6 +91,14 @@ async def cmd_help(message: Message):
         "/meals 3 — задать число приёмов пищи в день\n"
         "/budget 1200 — задать дневной бюджет\n"
         "/budget clear — убрать ограничение бюджета\n"
+        "/likes — показать likes\n"
+        "/likes add chicken — добавить like\n"
+        "/likes remove chicken — удалить like\n"
+        "/likes clear — очистить likes\n"
+        "/dislikes — показать dislikes\n"
+        "/dislikes add fish — добавить dislike\n"
+        "/dislikes remove fish — удалить dislike\n"
+        "/dislikes clear — очистить dislikes\n"
         "/plan — построить дневной план\n"
         "/week — построить недельный план\n"
         "/strict soft — dislikes только штрафуют\n"
@@ -251,6 +262,118 @@ async def cmd_budget(message: Message):
     updated = container.orchestrator.update_budget(user_id, budget)
     await message.answer(f"✅ Дневной бюджет обновлён: {budget}")
     await message.answer(TelegramFormatter.format_profile(updated))
+
+
+@dp.message(Command("likes"))
+async def cmd_likes(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=2)
+
+    if len(parts) == 1:
+        await message.answer(TelegramFormatter.format_named_list("❤️ Likes", profile.likes))
+        return
+
+    action = parts[1].strip().lower()
+
+    if action == "clear":
+        updated = container.orchestrator.clear_likes(user_id)
+        await message.answer("✅ Likes очищены.")
+        await message.answer(TelegramFormatter.format_named_list("❤️ Likes", updated.likes))
+        return
+
+    if action in {"add", "remove"}:
+        if len(parts) < 3:
+            await message.answer(
+                "Используй:\n"
+                "/likes add chicken\n"
+                "/likes remove chicken"
+            )
+            return
+
+        item = parts[2].strip()
+
+        if action == "add":
+            updated = container.orchestrator.add_like(user_id, item)
+            await message.answer(f"✅ Добавлено в likes: {item}")
+            await message.answer(TelegramFormatter.format_named_list("❤️ Likes", updated.likes))
+            return
+
+        if action == "remove":
+            updated = container.orchestrator.remove_like(user_id, item)
+            await message.answer(f"✅ Удалено из likes: {item}")
+            await message.answer(TelegramFormatter.format_named_list("❤️ Likes", updated.likes))
+            return
+
+    await message.answer(
+        "Доступно:\n"
+        "/likes — показать likes\n"
+        "/likes add chicken — добавить\n"
+        "/likes remove chicken — удалить\n"
+        "/likes clear — очистить"
+    )
+
+
+@dp.message(Command("dislikes"))
+async def cmd_dislikes(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=2)
+
+    if len(parts) == 1:
+        await message.answer(TelegramFormatter.format_named_list("💔 Dislikes", profile.dislikes))
+        return
+
+    action = parts[1].strip().lower()
+
+    if action == "clear":
+        updated = container.orchestrator.clear_dislikes(user_id)
+        await message.answer("✅ Dislikes очищены.")
+        await message.answer(TelegramFormatter.format_named_list("💔 Dislikes", updated.dislikes))
+        return
+
+    if action in {"add", "remove"}:
+        if len(parts) < 3:
+            await message.answer(
+                "Используй:\n"
+                "/dislikes add fish\n"
+                "/dislikes remove fish"
+            )
+            return
+
+        item = parts[2].strip()
+
+        if action == "add":
+            updated = container.orchestrator.add_dislike(user_id, item)
+            await message.answer(f"✅ Добавлено в dislikes: {item}")
+            await message.answer(TelegramFormatter.format_named_list("💔 Dislikes", updated.dislikes))
+            return
+
+        if action == "remove":
+            updated = container.orchestrator.remove_dislike(user_id, item)
+            await message.answer(f"✅ Удалено из dislikes: {item}")
+            await message.answer(TelegramFormatter.format_named_list("💔 Dislikes", updated.dislikes))
+            return
+
+    await message.answer(
+        "Доступно:\n"
+        "/dislikes — показать dislikes\n"
+        "/dislikes add fish — добавить\n"
+        "/dislikes remove fish — удалить\n"
+        "/dislikes clear — очистить"
+    )
 
 
 @dp.message(Command("strict"))

@@ -36,9 +36,13 @@ class TelegramFormatter:
         )
 
     @staticmethod
+    def format_named_list(title: str, items: list[str]) -> str:
+        value = ", ".join(items) if items else "—"
+        return f"{title}\n\n{value}"
+
+    @staticmethod
     def format_forbidden(profile: UserProfile) -> str:
-        items = ", ".join(profile.forbidden_products) if profile.forbidden_products else "—"
-        return f"⛔ Стоп-лист\n\n{items}"
+        return TelegramFormatter.format_named_list("⛔ Стоп-лист", profile.forbidden_products)
 
     @staticmethod
     def format_schedule(profile: UserProfile) -> str:
