@@ -1,5 +1,5 @@
 from app.models.user_profile import UserProfile
-from app.models.meal import MealPlan
+from app.models.meal import MealPlan, MealCandidate
 from app.models.delivery import DeliveryDecision
 from app.models.order import OrderPlan, OrderExecutionResult
 
@@ -36,6 +36,11 @@ class TelegramFormatter:
         )
 
     @staticmethod
+    def format_forbidden(profile: UserProfile) -> str:
+        items = ", ".join(profile.forbidden_products) if profile.forbidden_products else "—"
+        return f"⛔ Стоп-лист\n\n{items}"
+
+    @staticmethod
     def format_schedule(profile: UserProfile) -> str:
         lines = ["🕒 Расписание доставки\n"]
 
@@ -54,6 +59,26 @@ class TelegramFormatter:
             else:
                 windows_text = "не задано"
             lines.append(f"{TelegramFormatter._day_label(day)}: {windows_text}")
+
+        return "\n".join(lines)
+
+    @staticmethod
+    def format_catalog(meals: list[MealCandidate], title: str = "📚 Каталог блюд") -> str:
+        lines = [f"{title}\n"]
+
+        if not meals:
+            lines.append("Список пуст.")
+            return "\n".join(lines)
+
+        for idx, meal in enumerate(meals, start=1):
+            ingredients = ", ".join(meal.ingredients) if meal.ingredients else "—"
+            lines.append(
+                f"{idx}. {meal.name}\n"
+                f"   • id: {meal.id}\n"
+                f"   • {meal.calories} ккал\n"
+                f"   • {meal.price} ₽\n"
+                f"   • ingredients: {ingredients}\n"
+            )
 
         return "\n".join(lines)
 

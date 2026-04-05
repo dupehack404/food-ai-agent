@@ -46,6 +46,52 @@ class FoodOrchestrator:
         self.user_repository.save_user_profile(profile)
         return profile
 
+    def add_forbidden_product(self, user_id: str, product: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        normalized = product.strip().lower()
+        if normalized and normalized not in [x.lower() for x in profile.forbidden_products]:
+            profile.forbidden_products.append(normalized)
+
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def remove_forbidden_product(self, user_id: str, product: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        normalized = product.strip().lower()
+        profile.forbidden_products = [
+            item for item in profile.forbidden_products
+            if item.lower() != normalized
+        ]
+
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def clear_forbidden_products(self, user_id: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        profile.forbidden_products = []
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def get_catalog(self):
+        return self.catalog_repository.get_catalog()
+
+    def get_safe_catalog(self, user_id: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        catalog = self.catalog_repository.get_catalog()
+        return self.meal_agent.get_safe_catalog(profile, catalog)
+
     def set_day_schedule(self, user_id: str, day_name: str, windows: list):
         profile = self.user_repository.get_user_profile(user_id)
         if not profile:

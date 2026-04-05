@@ -21,40 +21,13 @@ dp = Dispatcher()
 
 def normalize_day_name(raw_day: str) -> str | None:
     mapping = {
-        "monday": "monday",
-        "mon": "monday",
-        "понедельник": "monday",
-        "пн": "monday",
-
-        "tuesday": "tuesday",
-        "tue": "tuesday",
-        "вторник": "tuesday",
-        "вт": "tuesday",
-
-        "wednesday": "wednesday",
-        "wed": "wednesday",
-        "среда": "wednesday",
-        "ср": "wednesday",
-
-        "thursday": "thursday",
-        "thu": "thursday",
-        "четверг": "thursday",
-        "чт": "thursday",
-
-        "friday": "friday",
-        "fri": "friday",
-        "пятница": "friday",
-        "пт": "friday",
-
-        "saturday": "saturday",
-        "sat": "saturday",
-        "суббота": "saturday",
-        "сб": "saturday",
-
-        "sunday": "sunday",
-        "sun": "sunday",
-        "воскресенье": "sunday",
-        "вс": "sunday",
+        "monday": "monday", "mon": "monday", "понедельник": "monday", "пн": "monday",
+        "tuesday": "tuesday", "tue": "tuesday", "вторник": "tuesday", "вт": "tuesday",
+        "wednesday": "wednesday", "wed": "wednesday", "среда": "wednesday", "ср": "wednesday",
+        "thursday": "thursday", "thu": "thursday", "четверг": "thursday", "чт": "thursday",
+        "friday": "friday", "fri": "friday", "пятница": "friday", "пт": "friday",
+        "saturday": "saturday", "sat": "saturday", "суббота": "saturday", "сб": "saturday",
+        "sunday": "sunday", "sun": "sunday", "воскресенье": "sunday", "вс": "sunday",
     }
     return mapping.get(raw_day.strip().lower())
 
@@ -85,7 +58,9 @@ async def cmd_start(message: Message):
         "• сохранять твои предпочтения\n"
         "• строить план питания на день и неделю\n"
         "• учитывать бюджет\n"
-        "• учитывать время доставки\n\n"
+        "• учитывать время доставки\n"
+        "• показывать каталог и безопасные блюда\n"
+        "• управлять стоп-листом\n\n"
         "Команды:\n"
         "/prefs <текст>\n"
         "/profile\n"
@@ -93,6 +68,8 @@ async def cmd_start(message: Message):
         "/week\n"
         "/strict <soft|hard>\n"
         "/schedule\n"
+        "/catalog\n"
+        "/forbidden\n"
         "/help"
     )
 
@@ -111,6 +88,12 @@ async def cmd_help(message: Message):
         "/schedule set monday 08:00-09:30,16:00-21:00 — задать окна\n"
         "/schedule clear sunday — очистить окна дня\n"
         "/schedule reset — вернуть дефолтное расписание\n"
+        "/catalog — показать весь каталог\n"
+        "/catalog safe — показать безопасные блюда под твой профиль\n"
+        "/forbidden — показать стоп-лист\n"
+        "/forbidden add strawberry — добавить в стоп-лист\n"
+        "/forbidden remove strawberry — убрать из стоп-листа\n"
+        "/forbidden clear — очистить стоп-лист\n"
         "/help — показать помощь"
     )
 
@@ -154,6 +137,7 @@ async def cmd_profile(message: Message):
 
     await message.answer(TelegramFormatter.format_profile(profile))
     await message.answer(TelegramFormatter.format_schedule(profile))
+    await message.answer(TelegramFormatter.format_forbidden(profile))
 
 
 @dp.message(Command("strict"))
@@ -263,6 +247,92 @@ async def cmd_schedule(message: Message):
         "/schedule set monday 08:00-09:30,16:00-21:00\n"
         "/schedule clear sunday\n"
         "/schedule reset"
+    )
+
+
+@dp.message(Command("catalog"))
+async def cmd_catalog(message: Message):
+    user_id = str(message.from_user.id)
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=1)
+
+    if len(parts) == 1:
+        meals = container.orchestrator.get_catalog()
+        await message.answer(TelegramFormatter.format_catalog(meals, "📚 Полный каталог"))
+        return
+
+    subcommand = parts[1].strip().lower()
+
+    if subcommand == "safe":
+        profile = container.user_repository.get_user_profile(user_id)
+        if not profile:
+            await message.answer("Профиль не найден. Сначала используй /prefs")
+            return
+
+        meals = container.orchestrator.get_safe_catalog(user_id)
+        await message.answer(TelegramFormatter.format_catalog(meals, "✅ Безопасные блюда"))
+        return
+
+    await message.answer(
+        "Доступно:\n"
+        "/catalog — показать весь каталог\n"
+        "/catalog safe — показать безопасные блюда под твой профиль"
+    )
+
+
+@dp.message(Command("forbidden"))
+async def cmd_forbidden(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=2)
+
+    if len(parts) == 1:
+        await message.answer(TelegramFormatter.format_forbidden(profile))
+        return
+
+    action = parts[1].strip().lower()
+
+    if action == "clear":
+        updated = container.orchestrator.clear_forbidden_products(user_id)
+        await message.answer("✅ Стоп-лист очищен.")
+        await message.answer(TelegramFormatter.format_forbidden(updated))
+        return
+
+    if action in {"add", "remove"}:
+        if len(parts) < 3:
+            await message.answer(
+                "Используй:\n"
+                "/forbidden add strawberry\n"
+                "/forbidden remove strawberry"
+            )
+            return
+
+        product = parts[2].strip()
+
+        if action == "add":
+            updated = container.orchestrator.add_forbidden_product(user_id, product)
+            await message.answer(f"✅ Добавлено в стоп-лист: {product}")
+            await message.answer(TelegramFormatter.format_forbidden(updated))
+            return
+
+        if action == "remove":
+            updated = container.orchestrator.remove_forbidden_product(user_id, product)
+            await message.answer(f"✅ Удалено из стоп-листа: {product}")
+            await message.answer(TelegramFormatter.format_forbidden(updated))
+            return
+
+    await message.answer(
+        "Доступно:\n"
+        "/forbidden — показать стоп-лист\n"
+        "/forbidden add strawberry — добавить продукт\n"
+        "/forbidden remove strawberry — удалить продукт\n"
+        "/forbidden clear — очистить стоп-лист"
     )
 
 
