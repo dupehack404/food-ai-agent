@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from locale import str
 
 
 class FoodOrchestrator:
@@ -34,7 +33,7 @@ class FoodOrchestrator:
 
         self.user_repository.save_user_profile(updated_profile)
         return updated_profile
-    
+
     def update_dislike_mode(self, user_id: str, mode: str):
         profile = self.user_repository.get_user_profile(user_id)
         if not profile:
@@ -44,6 +43,24 @@ class FoodOrchestrator:
             return None
 
         profile.dislike_mode = mode
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def set_day_schedule(self, user_id: str, day_name: str, windows: list):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        setattr(profile.weekly_availability, day_name, windows)
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def clear_day_schedule(self, user_id: str, day_name: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        setattr(profile.weekly_availability, day_name, [])
         self.user_repository.save_user_profile(profile)
         return profile
 

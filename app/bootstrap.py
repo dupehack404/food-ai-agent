@@ -48,134 +48,130 @@ class AppContainer:
             return
 
         self.catalog_repository.replace_catalog([
-    MealCandidate(
-        id="meal-1",
-        name="Chicken with rice",
-        calories=650,
-        price=350.0,
-        ingredients=["chicken", "rice", "spices"],
-        tags=["high_protein", "no_milk"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-2",
-        name="Fish with potato",
-        calories=700,
-        price=420.0,
-        ingredients=["fish", "potato", "oil"],
-        tags=["omega3"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-3",
-        name="Beef with buckwheat",
-        calories=750,
-        price=390.0,
-        ingredients=["beef", "buckwheat", "salt"],
-        tags=["high_protein"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-4",
-        name="Omelette with cheese",
-        calories=500,
-        price=280.0,
-        ingredients=["eggs", "cheese", "milk"],
-        tags=["breakfast"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-5",
-        name="Chicken salad",
-        calories=550,
-        price=330.0,
-        ingredients=["chicken", "lettuce", "tomato"],
-        tags=["light"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-6",
-        name="Turkey with bulgur",
-        calories=680,
-        price=360.0,
-        ingredients=["turkey", "bulgur", "spices"],
-        tags=["high_protein"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-7",
-        name="Chicken soup",
-        calories=480,
-        price=290.0,
-        ingredients=["chicken", "broth", "potato", "carrot"],
-        tags=["light"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-8",
-        name="Beef with rice",
-        calories=720,
-        price=400.0,
-        ingredients=["beef", "rice", "salt"],
-        tags=["high_protein"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-9",
-        name="Turkey salad",
-        calories=530,
-        price=320.0,
-        ingredients=["turkey", "lettuce", "cucumber"],
-        tags=["light"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-10",
-        name="Lentil bowl",
-        calories=610,
-        price=280.0,
-        ingredients=["lentils", "rice", "tomato"],
-        tags=["vegan", "budget"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-11",
-        name="Chicken with pasta",
-        calories=700,
-        price=340.0,
-        ingredients=["chicken", "pasta", "spices"],
-        tags=["high_protein"],
-        source="demo_catalog",
-        available=True,
-    ),
-    MealCandidate(
-        id="meal-12",
-        name="Beef stew",
-        calories=690,
-        price=410.0,
-        ingredients=["beef", "potato", "carrot"],
-        tags=["hot_meal"],
-        source="demo_catalog",
-        available=True,
-    ),
-])
+            MealCandidate(
+                id="meal-1",
+                name="Chicken with rice",
+                calories=650,
+                price=350.0,
+                ingredients=["chicken", "rice", "spices"],
+                tags=["high_protein", "no_milk"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-2",
+                name="Fish with potato",
+                calories=700,
+                price=420.0,
+                ingredients=["fish", "potato", "oil"],
+                tags=["omega3"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-3",
+                name="Beef with buckwheat",
+                calories=750,
+                price=390.0,
+                ingredients=["beef", "buckwheat", "salt"],
+                tags=["high_protein"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-4",
+                name="Omelette with cheese",
+                calories=500,
+                price=280.0,
+                ingredients=["eggs", "cheese", "milk"],
+                tags=["breakfast"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-5",
+                name="Chicken salad",
+                calories=550,
+                price=330.0,
+                ingredients=["chicken", "lettuce", "tomato"],
+                tags=["light"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-6",
+                name="Turkey with bulgur",
+                calories=680,
+                price=360.0,
+                ingredients=["turkey", "bulgur", "spices"],
+                tags=["high_protein"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-7",
+                name="Chicken soup",
+                calories=480,
+                price=290.0,
+                ingredients=["chicken", "broth", "potato", "carrot"],
+                tags=["light"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-8",
+                name="Beef with rice",
+                calories=720,
+                price=400.0,
+                ingredients=["beef", "rice", "salt"],
+                tags=["high_protein"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-9",
+                name="Turkey salad",
+                calories=530,
+                price=320.0,
+                ingredients=["turkey", "lettuce", "cucumber"],
+                tags=["light"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-10",
+                name="Lentil bowl",
+                calories=610,
+                price=280.0,
+                ingredients=["lentils", "rice", "tomato"],
+                tags=["vegan", "budget"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-11",
+                name="Chicken with pasta",
+                calories=700,
+                price=340.0,
+                ingredients=["chicken", "pasta", "spices"],
+                tags=["high_protein"],
+                source="demo_catalog",
+                available=True,
+            ),
+            MealCandidate(
+                id="meal-12",
+                name="Beef stew",
+                calories=690,
+                price=410.0,
+                ingredients=["beef", "potato", "carrot"],
+                tags=["hot_meal"],
+                source="demo_catalog",
+                available=True,
+            ),
+        ])
 
-    def ensure_default_schedule(self, user_id: str):
-        profile = self.user_repository.get_user_profile(user_id)
-        if not profile:
-            return
-
-        default_windows = {
+    def _default_windows(self) -> dict[str, list[TimeWindow]]:
+        return {
             "monday": [
                 TimeWindow(start="08:00", end="09:30"),
                 TimeWindow(start="16:00", end="21:00"),
@@ -204,9 +200,14 @@ class AppContainer:
             ],
         }
 
+    def ensure_default_schedule(self, user_id: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return
+
         changed = False
 
-        for day, windows in default_windows.items():
+        for day, windows in self._default_windows().items():
             current_windows = getattr(profile.weekly_availability, day)
             if not current_windows:
                 setattr(profile.weekly_availability, day, windows)
@@ -214,3 +215,14 @@ class AppContainer:
 
         if changed:
             self.user_repository.save_user_profile(profile)
+
+    def reset_default_schedule(self, user_id: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        for day, windows in self._default_windows().items():
+            setattr(profile.weekly_availability, day, windows)
+
+        self.user_repository.save_user_profile(profile)
+        return profile

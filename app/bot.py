@@ -1,4 +1,5 @@
 import asyncio
+import re
 from datetime import datetime
 
 from aiogram import Bot, Dispatcher
@@ -7,6 +8,7 @@ from aiogram.types import Message
 
 from app.core.config import settings
 from app.bootstrap import AppContainer
+from app.models.user_profile import TimeWindow
 from app.services.telegram_service import TelegramFormatter
 
 
@@ -15,6 +17,64 @@ container.seed_demo_catalog()
 
 bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
+
+
+def normalize_day_name(raw_day: str) -> str | None:
+    mapping = {
+        "monday": "monday",
+        "mon": "monday",
+        "понедельник": "monday",
+        "пн": "monday",
+
+        "tuesday": "tuesday",
+        "tue": "tuesday",
+        "вторник": "tuesday",
+        "вт": "tuesday",
+
+        "wednesday": "wednesday",
+        "wed": "wednesday",
+        "среда": "wednesday",
+        "ср": "wednesday",
+
+        "thursday": "thursday",
+        "thu": "thursday",
+        "четверг": "thursday",
+        "чт": "thursday",
+
+        "friday": "friday",
+        "fri": "friday",
+        "пятница": "friday",
+        "пт": "friday",
+
+        "saturday": "saturday",
+        "sat": "saturday",
+        "суббота": "saturday",
+        "сб": "saturday",
+
+        "sunday": "sunday",
+        "sun": "sunday",
+        "воскресенье": "sunday",
+        "вс": "sunday",
+    }
+    return mapping.get(raw_day.strip().lower())
+
+
+def parse_time_windows(raw_text: str) -> list[TimeWindow] | None:
+    chunks = [chunk.strip() for chunk in raw_text.split(",") if chunk.strip()]
+    result: list[TimeWindow] = []
+
+    for chunk in chunks:
+        match = re.fullmatch(r"(\d{2}:\d{2})-(\d{2}:\d{2})", chunk)
+        if not match:
+            return None
+
+        start, end = match.groups()
+        if start >= end:
+            return None
+
+        result.append(TimeWindow(start=start, end=end))
+
+    return result
 
 
 @dp.message(Command("start"))
@@ -32,6 +92,7 @@ async def cmd_start(message: Message):
         "/plan\n"
         "/week\n"
         "/strict <soft|hard>\n"
+        "/schedule\n"
         "/help"
     )
 
@@ -46,6 +107,10 @@ async def cmd_help(message: Message):
         "/week — построить недельный план\n"
         "/strict soft — dislikes только штрафуют\n"
         "/strict hard — dislikes полностью исключаются\n"
+        "/schedule — показать текущее расписание\n"
+        "/schedule set monday 08:00-09:30,16:00-21:00 — задать окна\n"
+        "/schedule clear sunday — очистить окна дня\n"
+        "/schedule reset — вернуть дефолтное расписание\n"
         "/help — показать помощь"
     )
 
@@ -75,6 +140,7 @@ async def cmd_prefs(message: Message):
 
     await message.answer("✅ Предпочтения обновлены.")
     await message.answer(TelegramFormatter.format_profile(profile))
+    await message.answer(TelegramFormatter.format_schedule(profile))
 
 
 @dp.message(Command("profile"))
@@ -87,6 +153,7 @@ async def cmd_profile(message: Message):
         return
 
     await message.answer(TelegramFormatter.format_profile(profile))
+    await message.answer(TelegramFormatter.format_schedule(profile))
 
 
 @dp.message(Command("strict"))
@@ -121,6 +188,82 @@ async def cmd_strict(message: Message):
     mode_label = "жёсткий" if mode == "hard" else "мягкий"
     await message.answer(f"✅ Режим dislikes обновлён: {mode_label}")
     await message.answer(TelegramFormatter.format_profile(updated_profile))
+
+
+@dp.message(Command("schedule"))
+async def cmd_schedule(message: Message):
+    user_id = str(message.from_user.id)
+    profile = container.user_repository.get_user_profile(user_id)
+
+    if not profile:
+        await message.answer("Профиль не найден. Сначала используй /prefs")
+        return
+
+    raw_text = message.text or ""
+    parts = raw_text.split(maxsplit=3)
+
+    if len(parts) == 1:
+        await message.answer(TelegramFormatter.format_schedule(profile))
+        return
+
+    action = parts[1].strip().lower()
+
+    if action == "reset":
+        updated = container.reset_default_schedule(user_id)
+        await message.answer("✅ Дефолтное расписание восстановлено.")
+        await message.answer(TelegramFormatter.format_schedule(updated))
+        return
+
+    if action == "clear":
+        if len(parts) < 3:
+            await message.answer("Используй: /schedule clear sunday")
+            return
+
+        day_name = normalize_day_name(parts[2])
+        if not day_name:
+            await message.answer("Не удалось распознать день недели.")
+            return
+
+        updated = container.orchestrator.clear_day_schedule(user_id, day_name)
+        await message.answer("✅ Окна доставки для выбранного дня очищены.")
+        await message.answer(TelegramFormatter.format_schedule(updated))
+        return
+
+    if action == "set":
+        if len(parts) < 4:
+            await message.answer(
+                "Используй формат:\n"
+                "/schedule set monday 08:00-09:30,16:00-21:00"
+            )
+            return
+
+        day_name = normalize_day_name(parts[2])
+        if not day_name:
+            await message.answer("Не удалось распознать день недели.")
+            return
+
+        windows = parse_time_windows(parts[3])
+        if windows is None:
+            await message.answer(
+                "Некорректный формат времени.\n"
+                "Пример:\n"
+                "/schedule set monday 08:00-09:30,16:00-21:00"
+            )
+            return
+
+        updated = container.orchestrator.set_day_schedule(user_id, day_name, windows)
+        await message.answer("✅ Расписание обновлено.")
+        await message.answer(TelegramFormatter.format_schedule(updated))
+        return
+
+    await message.answer(
+        "Неизвестная команда для /schedule.\n\n"
+        "Доступно:\n"
+        "/schedule\n"
+        "/schedule set monday 08:00-09:30,16:00-21:00\n"
+        "/schedule clear sunday\n"
+        "/schedule reset"
+    )
 
 
 @dp.message(Command("plan"))

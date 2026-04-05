@@ -6,6 +6,19 @@ from app.models.order import OrderPlan, OrderExecutionResult
 
 class TelegramFormatter:
     @staticmethod
+    def _day_label(day_name: str) -> str:
+        mapping = {
+            "monday": "Понедельник",
+            "tuesday": "Вторник",
+            "wednesday": "Среда",
+            "thursday": "Четверг",
+            "friday": "Пятница",
+            "saturday": "Суббота",
+            "sunday": "Воскресенье",
+        }
+        return mapping.get(day_name, day_name)
+
+    @staticmethod
     def format_profile(profile: UserProfile) -> str:
         mode_label = "жёсткий" if profile.dislike_mode == "hard" else "мягкий"
 
@@ -21,6 +34,28 @@ class TelegramFormatter:
             f"Бюджет в день: {profile.budget_per_day if profile.budget_per_day is not None else '—'}\n"
             f"Режим dislikes: {mode_label}"
         )
+
+    @staticmethod
+    def format_schedule(profile: UserProfile) -> str:
+        lines = ["🕒 Расписание доставки\n"]
+
+        for day in [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]:
+            windows = getattr(profile.weekly_availability, day)
+            if windows:
+                windows_text = ", ".join(f"{w.start}-{w.end}" for w in windows)
+            else:
+                windows_text = "не задано"
+            lines.append(f"{TelegramFormatter._day_label(day)}: {windows_text}")
+
+        return "\n".join(lines)
 
     @staticmethod
     def format_meal_plan(meal_plan: MealPlan) -> str:
