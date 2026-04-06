@@ -4,6 +4,7 @@ from app.services.playwright_executor import PlaywrightExecutor
 
 from app.agents.preference_agent import PreferenceAgent
 from app.agents.meal_agent import MealAgent
+from app.agents.weekly_planner_agent import WeeklyPlannerAgent
 from app.agents.delivery_window_agent import DeliveryWindowAgent
 from app.agents.order_agent import OrderAgent
 
@@ -28,6 +29,7 @@ class AppContainer:
 
         self.preference_agent = PreferenceAgent()
         self.meal_agent = MealAgent()
+        self.weekly_planner_agent = WeeklyPlannerAgent(self.meal_agent)
         self.delivery_window_agent = DeliveryWindowAgent()
         self.order_agent = OrderAgent()
         self.order_executor = PlaywrightExecutor()
@@ -38,6 +40,7 @@ class AppContainer:
             catalog_repository=self.catalog_repository,
             preference_agent=self.preference_agent,
             meal_agent=self.meal_agent,
+            weekly_planner_agent=self.weekly_planner_agent,
             delivery_window_agent=self.delivery_window_agent,
             order_agent=self.order_agent,
             order_executor=self.order_executor,

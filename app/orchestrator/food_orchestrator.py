@@ -1,6 +1,3 @@
-from datetime import datetime, timedelta
-
-
 class FoodOrchestrator:
     def __init__(
         self,
@@ -9,6 +6,7 @@ class FoodOrchestrator:
         catalog_repository,
         preference_agent,
         meal_agent,
+        weekly_planner_agent,
         delivery_window_agent,
         order_agent,
         order_executor,
@@ -18,6 +16,7 @@ class FoodOrchestrator:
         self.catalog_repository = catalog_repository
         self.preference_agent = preference_agent
         self.meal_agent = meal_agent
+        self.weekly_planner_agent = weekly_planner_agent
         self.delivery_window_agent = delivery_window_agent
         self.order_agent = order_agent
         self.order_executor = order_executor
@@ -36,10 +35,7 @@ class FoodOrchestrator:
 
     def update_dislike_mode(self, user_id: str, mode: str):
         profile = self.user_repository.get_user_profile(user_id)
-        if not profile:
-            return None
-
-        if mode not in {"soft", "hard"}:
+        if not profile or mode not in {"soft", "hard"}:
             return None
 
         profile.dislike_mode = mode
@@ -172,6 +168,38 @@ class FoodOrchestrator:
         self.user_repository.save_user_profile(profile)
         return profile
 
+    def add_allergy(self, user_id: str, item: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        normalized = item.strip().lower()
+        if normalized and normalized not in [x.lower() for x in profile.allergies]:
+            profile.allergies.append(normalized)
+
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def remove_allergy(self, user_id: str, item: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        normalized = item.strip().lower()
+        profile.allergies = [x for x in profile.allergies if x.lower() != normalized]
+
+        self.user_repository.save_user_profile(profile)
+        return profile
+
+    def clear_allergies(self, user_id: str):
+        profile = self.user_repository.get_user_profile(user_id)
+        if not profile:
+            return None
+
+        profile.allergies = []
+        self.user_repository.save_user_profile(profile)
+        return profile
+
     def get_catalog(self):
         return self.catalog_repository.get_catalog()
 
@@ -210,10 +238,7 @@ class FoodOrchestrator:
     ):
         profile = self.user_repository.get_user_profile(user_id)
         if not profile:
-            return {
-                "status": "error",
-                "message": "User profile not found.",
-            }
+            return {"status": "error", "message": "User profile not found."}
 
         catalog = self.catalog_repository.get_catalog()
         history = self.meal_history_repository.get_recent_meal_plans(user_id)
@@ -260,34 +285,21 @@ class FoodOrchestrator:
     def run_weekly_planning(self, user_id: str, start_date: str, days: int = 7):
         profile = self.user_repository.get_user_profile(user_id)
         if not profile:
-            return {
-                "status": "error",
-                "message": "User profile not found.",
-            }
+            return {"status": "error", "message": "User profile not found."}
 
         catalog = self.catalog_repository.get_catalog()
-        base_history = self.meal_history_repository.get_recent_meal_plans(user_id)
+        history = self.meal_history_repository.get_recent_meal_plans(user_id)
 
-        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-        simulated_history = list(base_history)
-        weekly_plans = []
-
-        for offset in range(days):
-            day_dt = start_dt + timedelta(days=offset)
-            target_day = day_dt.strftime("%Y-%m-%d")
-
-            meal_plan = self.meal_agent.plan(
-                profile=profile,
-                catalog=catalog,
-                history=simulated_history,
-                target_day=target_day,
-            )
-
-            weekly_plans.append(meal_plan)
-            simulated_history.append(meal_plan)
+        plans = self.weekly_planner_agent.plan_week(
+            profile=profile,
+            catalog=catalog,
+            history=history,
+            start_date=start_date,
+            days=days,
+        )
 
         return {
             "status": "ok",
             "profile": profile,
-            "plans": weekly_plans,
+            "plans": plans,
         }
